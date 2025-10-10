@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import os
 import hashlib
+#Test to see if its uploaded
 
 def check_password():
     """Returns True if the user had the correct password."""
