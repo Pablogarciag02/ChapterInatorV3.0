@@ -42,6 +42,7 @@ API_BASE_URL = "https://app.wordware.ai/api/released-app"
 
 APP_IDS = {
     "compendio_to_markdown": "ac114c48-be3a-4ab5-98ee-02a7d11c8dd7",
+    "compendio_to_markdown2": "a26d2240-33cf-456a-8e6b-974cdef320ee",
     "project_brief_to_markdown": "b198e35c-9089-4dc4-a281-92bbb04d7528",
     "mapping_referencias": "da1c1988-c58f-4574-be2c-822cd743179c",
     "mapping_citas": "d5202c5b-316c-466e-a85a-3d2e3d7fe405",
@@ -356,7 +357,7 @@ def render_stage_1():
             
             # Submit jobs
             future1 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown"], {"CompendioPDF": compendio_input})
-            future2 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown"], {"CompendioPDF": compendio_input})
+            future2 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown2"], {"CompendioPDF": compendio_input})
             future3 = None
             if brief_url:
                 brief_input = {"type": "file", "file_type": "application/pdf", "file_url": brief_url, "file_name": project_brief_file.name}
