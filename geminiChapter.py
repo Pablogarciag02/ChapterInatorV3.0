@@ -2384,15 +2384,43 @@ def render_stage_4():
                     with col_arco2:
                         if st.button("🔄 Auto-actualizar", key=f"auto_arco_{chapter_id}", help="Regenera el arco narrativo basado en la estructura actual de capítulos y subtemas", use_container_width=True):
                             with st.spinner("Generando nuevo arco narrativo..."):
-                                # Get current skeleton structure (with any edits made above)
-                                current_esqueleto = st.session_state.skeleton.get('EsqueletoMaestro', {}).get('esqueletoLogica', {})
-                                current_chapters = current_esqueleto.get('estructura_capitulos', [])
-                                current_subchapters = current_esqueleto.get('estructura_sub_capitulos', [])
-                                current_arco = current_esqueleto.get('arco_narrativo', '')
+                                # Build hybrid structure: current edits + saved skeleton
+                                esqueleto_base = st.session_state.skeleton.get('EsqueletoMaestro', {}).get('esqueletoLogica', {})
+                                
+                                # Get saved values
+                                saved_chapters = esqueleto_base.get('estructura_capitulos', []).copy()
+                                saved_subchapters = esqueleto_base.get('estructura_sub_capitulos', []).copy()
+                                current_arco = esqueleto_base.get('arco_narrativo', '')
+                                
+                                # Get current edited values from form fields
+                                edited_title_text = st.session_state.get(f"param_title_{chapter_id}", "")
+                                edited_subtopics_raw = st.session_state.get(f"param_subtopics_{chapter_id}", "")
+                                
+                                # Process current chapter's edited title
+                                if edited_title_text:
+                                    if chapter_index < len(saved_chapters):
+                                        saved_chapters[chapter_index] = f"{chapter_number}. {edited_title_text}"
+                                
+                                # Process current chapter's edited subtopics
+                                if edited_subtopics_raw:
+                                    # Remove old subtopics for this chapter
+                                    saved_subchapters = [s for s in saved_subchapters if not s.startswith(f"{chapter_number}.")]
+                                    
+                                    # Add new edited subtopics
+                                    lines = [line.strip() for line in edited_subtopics_raw.split('\n') if line.strip()]
+                                    for j, line in enumerate(lines, 1):
+                                        clean_line = line
+                                        if '.' in line:
+                                            parts = line.split(' ', 1)
+                                            if len(parts) > 1 and parts[0].replace('.', '').replace(' ', '').isdigit():
+                                                clean_line = parts[1]
+                                        saved_subchapters.append(f"{chapter_number}.{j} {clean_line}")
+                                    
+                                    saved_subchapters.sort()
                                 
                                 inputs = {
-                                    "estructura_capitulos": current_chapters,
-                                    "estructura_sub_capitulos": current_subchapters,
+                                    "estructura_capitulos": saved_chapters,
+                                    "estructura_sub_capitulos": saved_subchapters,
                                     "previous_arco": current_arco
                                 }
                                 
@@ -2415,7 +2443,7 @@ def render_stage_4():
                                     
                                     if new_arco:
                                         # Update the skeleton
-                                        current_esqueleto['arco_narrativo'] = new_arco
+                                        esqueleto_base['arco_narrativo'] = new_arco
                                         st.success("✅ Arco narrativo actualizado!")
                                         st.rerun()
                                     else:
