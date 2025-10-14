@@ -1011,6 +1011,10 @@ def render_stage_3():
 
             # If user confirmed or first time generating
             if st.session_state.get('confirm_regen', True):
+                #Force re-run to commit form values if this is the first submission
+                if 'confirm_regen' not in st.session_state:
+                    st.session_state.confirm_regen = True
+                    st.rerun()
                 st.session_state.stage_3_status = 'in_progress'
                 
                 # Clear confirmation flag
