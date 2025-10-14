@@ -51,6 +51,7 @@ APP_IDS = {
     "mapping_logic": "c36eb029-1b08-4337-af35-4df4be3bef38",
     "theme_selector": "a9ba5428-5286-46f3-b3ca-1ba824c686d9",
     "chapter_creator": "75ad4354-dd42-406e-be67-67073b3b82a2",
+    "arcoNarrativo": "8582b48d-1343-4f0f-80df-271662fa0ce2",
     # NOTE: Placeholder as per documentation. Update if a real ID is provided.
     "table_generator": "660116bf-1f90-496b-aa12-d357044867ef" 
 }
@@ -1903,7 +1904,339 @@ def render_stage_3():
 #     if completed_chapters >= total_chapters:
 #         st.success("✅ Todos los capítulos generados. Procede a Stage 5.")
 
-## --- Stage 4: Chapter Creation (ENHANCED VERSION - Full Parameter Editing) ---
+# # # ## --- Stage 4: Chapter Creation (ENHANCED VERSION - Full Parameter Editing) ---
+# # # def render_stage_4():
+# # #     st.header("Stage 4: Chapter Generation")
+# # #     st.markdown("Generate chapters in any order. Edit parameters before generation and regenerate any chapter as needed.")
+
+# # #     if not st.session_state.chapter_sequence:
+# # #         st.warning("No chapters defined in the skeleton from Stage 3.")
+# # #         return
+
+# # #     # Display progress
+# # #     total_chapters = len(st.session_state.chapter_sequence)
+# # #     completed_chapters = len([c for c in st.session_state.chapter_sequence if c in st.session_state.generated_chapters])
+    
+# # #     if completed_chapters >= total_chapters and not st.session_state.book_complete:
+# # #         st.session_state.book_complete = True
+# # #         st.session_state.stage_4_status = 'completed'
+    
+# # #     st.progress(completed_chapters / total_chapters, text=f"{completed_chapters}/{total_chapters} Chapters Generated")
+
+# # #     if 'editing_params_for' not in st.session_state:
+# # #         st.session_state.editing_params_for = None
+
+# # #     if 'edit_modes' not in st.session_state:
+# # #         st.session_state.edit_modes = {}
+
+# # #     st.divider()
+
+# # #     esqueleto = st.session_state.skeleton.get('EsqueletoMaestro', {}).get('esqueletoLogica', {})
+    
+# # #     for idx, chapter_id in enumerate(st.session_state.chapter_sequence):
+# # #         chapter_number = idx + 1
+# # #         chapter_index = idx  # 0-based index for array access
+        
+# # #         chapter_title = esqueleto.get('estructura_capitulos', [])[chapter_number - 1] if chapter_number <= len(esqueleto.get('estructura_capitulos', [])) else f"{chapter_number}. Sin título"
+# # #         chapter_exists = chapter_id in st.session_state.generated_chapters
+# # #         is_editing_this = st.session_state.editing_params_for == chapter_id
+# # #         is_content_edit_mode = st.session_state.edit_modes.get(chapter_id, False)
+        
+# # #         status = "✅ Generado" if chapter_exists else "⚪ Pendiente"
+        
+# # #         st.subheader(f"{status} {chapter_title}")
+        
+# # #         # --- PARAMETER EDITING SECTION ---
+# # #         show_params = (not chapter_exists) or is_editing_this
+        
+# # #         if show_params:
+# # #             chapter_subtopics = [s for s in esqueleto.get('estructura_sub_capitulos', []) if s.startswith(f"{chapter_number}.")]
+# # #             arco_narrativo = esqueleto.get('arco_narrativo', '')
+            
+# # #             # Extract chapter-specific metrics
+# # #             metricas = esqueleto.get('metricas_estimadas', {})
+            
+# # #             # Helper function to parse metric value from string like "Capítulo 2: 11 páginas asignadas"
+# # #             def extract_metric_value(metric_array, chapter_num, default=0):
+# # #                 try:
+# # #                     for entry in metric_array:
+# # #                         if entry.startswith(f"Capítulo {chapter_num}:"):
+# # #                             # Extract number from string
+# # #                             import re
+# # #                             numbers = re.findall(r'\d+', entry.split(':')[1])
+# # #                             if numbers:
+# # #                                 return int(numbers[0])
+# # #                 except:
+# # #                     pass
+# # #                 return default
+            
+# # #             # Helper function to extract references from string like "Capítulo 2: REF-001, REF-003"
+# # #             def extract_references(ref_array, chapter_num, default=""):
+# # #                 try:
+# # #                     for entry in ref_array:
+# # #                         if entry.startswith(f"Capítulo {chapter_num}:"):
+# # #                             # Extract everything after the colon
+# # #                             return entry.split(':', 1)[1].strip()
+# # #                 except:
+# # #                     pass
+# # #                 return default
+            
+# # #             current_paginas = extract_metric_value(metricas.get('paginas_por_capitulo', []), chapter_number, 10)
+# # #             current_palabras = extract_metric_value(metricas.get('palabras_totales_por_capitulo', []), chapter_number, 1000)
+# # #             current_citas = extract_metric_value(metricas.get('citas_por_capitulo', []), chapter_number, 5)
+# # #             current_referencias = extract_references(esqueleto.get('distribuicion_referencias', {}).get('referenciasMapeo', []), chapter_number, "")
+            
+# # #             with st.expander("📋 Parámetros del Capítulo", expanded=is_editing_this):
+# # #                 if not is_editing_this:
+# # #                     st.markdown(f"**Título:** {chapter_title}")
+# # #                     st.markdown("**Subtemas:**")
+# # #                     for sub in chapter_subtopics:
+# # #                         st.write(f"  • {sub}")
+# # #                     st.markdown("**Métricas:**")
+# # #                     st.write(f"  • Páginas: {current_paginas}")
+# # #                     st.write(f"  • Palabras: {current_palabras}")
+# # #                     st.write(f"  • Citas esperadas: {current_citas}")
+# # #                     st.markdown("**Referencias asignadas:**")
+# # #                     st.write(f"  {current_referencias if current_referencias else 'Ninguna'}")
+                    
+# # #                     if st.button("✏️ Editar Parámetros", key=f"edit_params_{chapter_id}"):
+# # #                         st.session_state.editing_params_for = chapter_id
+# # #                         st.rerun()
+# # #                 else:
+# # #                     st.caption("*Edita los parámetros para este capítulo. Los cambios se guardarán en el esqueleto maestro.*")
+                    
+# # #                     # Chapter Title
+# # #                     title_text = chapter_title.split('.', 1)[1].strip() if '.' in chapter_title else chapter_title
+# # #                     edited_title = st.text_input("Título del Capítulo", value=title_text, key=f"param_title_{chapter_id}")
+                    
+# # #                     # Subtopics
+# # #                     st.markdown("**Subtemas** *(No agregues numeración)*")
+# # #                     subtopics_text = "\n".join([s.split(' ', 1)[1] if ' ' in s else s for s in chapter_subtopics])
+# # #                     edited_subtopics_text = st.text_area("Subtemas", value=subtopics_text, height=150, key=f"param_subtopics_{chapter_id}", label_visibility="collapsed")
+                    
+# # #                     st.divider()
+                    
+# # #                     # Metrics
+# # #                     st.markdown("**Métricas del Capítulo**")
+# # #                     col1, col2, col3 = st.columns(3)
+# # #                     with col1:
+# # #                         edited_paginas = st.number_input("Páginas Asignadas", min_value=1, value=current_paginas, step=1, key=f"param_paginas_{chapter_id}")
+# # #                     with col2:
+# # #                         edited_palabras = st.number_input("Palabras Estimadas", min_value=100, value=current_palabras, step=100, key=f"param_palabras_{chapter_id}")
+# # #                     with col3:
+# # #                         edited_citas = st.number_input("Citas Esperadas", min_value=0, value=current_citas, step=1, key=f"param_citas_{chapter_id}")
+                    
+# # #                     st.divider()
+                    
+# # #                     # References
+# # #                     st.markdown("**Referencias Asignadas**")
+# # #                     st.caption("*Formato: REF-001, REF-002, REF-003 (separadas por comas)*")
+# # #                     edited_referencias = st.text_input("Referencias", value=current_referencias, key=f"param_referencias_{chapter_id}", label_visibility="collapsed")
+                    
+# # #                     # Validate reference format
+# # #                     ref_warning = ""
+# # #                     if edited_referencias.strip():
+# # #                         refs = [r.strip() for r in edited_referencias.split(',')]
+# # #                         invalid_refs = [r for r in refs if not r.startswith('REF-')]
+# # #                         if invalid_refs:
+# # #                             ref_warning = f"⚠️ Referencias con formato incorrecto: {', '.join(invalid_refs)}"
+                    
+# # #                     if ref_warning:
+# # #                         st.warning(ref_warning)
+                    
+# # #                     st.divider()
+                    
+# # #                     # Narrative Arc (optional, can be hidden if too much)
+# # #                     with st.expander("Arco Narrativo (Opcional)", expanded=False):
+# # #                         edited_arco = st.text_area("Arco Narrativo", value=arco_narrativo, height=100, key=f"param_arco_{chapter_id}")
+                    
+# # #                     col1, col2 = st.columns(2)
+# # #                     with col1:
+# # #                         button_text = "🔄 Regenerar con Estos Parámetros" if chapter_exists else "💾 Guardar Parámetros"
+                        
+# # #                         if st.button(button_text, type="primary", use_container_width=True, key=f"save_params_{chapter_id}"):
+# # #                             # Process edited subtopics
+# # #                             edited_subtopics = []
+# # #                             if edited_subtopics_text.strip():
+# # #                                 lines = [line.strip() for line in edited_subtopics_text.split('\n') if line.strip()]
+# # #                                 for j, line in enumerate(lines, 1):
+# # #                                     clean_line = line
+# # #                                     if '.' in line:
+# # #                                         parts = line.split(' ', 1)
+# # #                                         if len(parts) > 1 and parts[0].replace('.', '').replace(' ', '').isdigit():
+# # #                                             clean_line = parts[1]
+# # #                                     edited_subtopics.append(f"{chapter_number}.{j} {clean_line}")
+                            
+# # #                             # Update the main skeleton directly
+# # #                             esqueleto_logica = st.session_state.skeleton.get('EsqueletoMaestro', {}).get('esqueletoLogica', {})
+                            
+# # #                             # Update chapter title
+# # #                             if 'estructura_capitulos' in esqueleto_logica and chapter_number <= len(esqueleto_logica['estructura_capitulos']):
+# # #                                 esqueleto_logica['estructura_capitulos'][chapter_index] = f"{chapter_number}. {edited_title}"
+                            
+# # #                             # Update subtopics
+# # #                             if 'estructura_sub_capitulos' in esqueleto_logica:
+# # #                                 esqueleto_logica['estructura_sub_capitulos'] = [
+# # #                                     s for s in esqueleto_logica['estructura_sub_capitulos'] 
+# # #                                     if not s.startswith(f"{chapter_number}.")
+# # #                                 ]
+# # #                                 esqueleto_logica['estructura_sub_capitulos'].extend(edited_subtopics)
+# # #                                 esqueleto_logica['estructura_sub_capitulos'].sort()
+                            
+# # #                             # Update metrics
+# # #                             metricas_est = esqueleto_logica.get('metricas_estimadas', {})
+# # #                             if 'paginas_por_capitulo' in metricas_est and chapter_index < len(metricas_est['paginas_por_capitulo']):
+# # #                                 metricas_est['paginas_por_capitulo'][chapter_index] = f"Capítulo {chapter_number}: {edited_paginas} páginas asignadas"
+# # #                             if 'palabras_totales_por_capitulo' in metricas_est and chapter_index < len(metricas_est['palabras_totales_por_capitulo']):
+# # #                                 metricas_est['palabras_totales_por_capitulo'][chapter_index] = f"Capítulo {chapter_number}: {edited_palabras} palabras estimadas"
+# # #                             if 'citas_por_capitulo' in metricas_est and chapter_index < len(metricas_est['citas_por_capitulo']):
+# # #                                 metricas_est['citas_por_capitulo'][chapter_index] = f"Capítulo {chapter_number}: {edited_citas} citas esperadas"
+                            
+# # #                             # Update references
+# # #                             dist_refs = esqueleto_logica.get('distribuicion_referencias', {})
+# # #                             if 'referenciasMapeo' in dist_refs and chapter_index < len(dist_refs['referenciasMapeo']):
+# # #                                 dist_refs['referenciasMapeo'][chapter_index] = f"Capítulo {chapter_number}: {edited_referencias}"
+                            
+# # #                             # Update narrative arc if it was expanded/edited
+# # #                             if f"param_arco_{chapter_id}" in st.session_state:
+# # #                                 esqueleto_logica['arco_narrativo'] = st.session_state[f"param_arco_{chapter_id}"]
+                            
+# # #                             st.session_state.editing_params_for = None
+                            
+# # #                             if chapter_exists:
+# # #                                 # REGENERATE NOW
+# # #                                 status_placeholder = st.empty()
+# # #                                 status_placeholder.info(f"🔄 Regenerando {chapter_id}...")
+                                
+# # #                                 # Get Merger output from mapping_combined
+# # #                                 mapeo_contenido = st.session_state.mapping_combined.get('Merger', {}).get('output', st.session_state.mapping_combined)
+                                
+# # #                                 inputs = {
+# # #                                     "Skeleton": json.dumps(st.session_state.skeleton.get('EsqueletoMaestro', {})),
+# # #                                     "CompendioMd": st.session_state.compendio_md,
+# # #                                     "previous_context": "",
+# # #                                     "capituloConstruir": chapter_id,
+# # #                                     "mapeoContenido": json.dumps(mapeo_contenido)
+# # #                                 }
+                                
+# # #                                 stream_container = st.empty()
+# # #                                 result = process_wordware_api(APP_IDS["chapter_creator"], inputs, stream_container)
+                                
+# # #                                 status_placeholder.empty()
+                                
+# # #                                 if result:
+# # #                                     generated_chapter = result.get('generatedChapter', {})
+# # #                                     chapter_data = generated_chapter.get('chapterTitle', {})
+                                    
+# # #                                     if chapter_data:
+# # #                                         st.session_state.generated_chapters[chapter_id] = chapter_data.copy()
+                                        
+# # #                                         if chapter_id not in st.session_state.chapters_completed:
+# # #                                             st.session_state.chapters_completed.append(chapter_id)
+                                        
+# # #                                         st.success(f"✅ {chapter_id} regenerado exitosamente!")
+# # #                                         st.balloons()
+# # #                                         time.sleep(2)
+# # #                                         st.rerun()
+# # #                                     else:
+# # #                                         st.error("❌ Respuesta malformada del API")
+# # #                                 else:
+# # #                                     st.error("❌ Fallo en la llamada al API")
+# # #                             else:
+# # #                                 st.success("✅ Parámetros guardados en el esqueleto maestro!")
+# # #                                 st.rerun()
+                    
+# # #                     with col2:
+# # #                         if st.button("❌ Cancelar", use_container_width=True, key=f"cancel_params_{chapter_id}"):
+# # #                             st.session_state.editing_params_for = None
+# # #                             st.rerun()
+        
+# # #         # --- GENERATION BUTTON ---
+# # #         if not chapter_exists:
+# # #             if st.button("▶️ Generar Capítulo", type="primary", use_container_width=True, key=f"gen_{chapter_id}"):
+# # #                 status_placeholder = st.empty()
+# # #                 status_placeholder.info(f"🔄 Generando {chapter_id}...")
+                
+# # #                 # Get Merger output from mapping_combined
+# # #                 mapeo_contenido = st.session_state.mapping_combined.get('Merger', {}).get('output', st.session_state.mapping_combined)
+                
+# # #                 inputs = {
+# # #                     "Skeleton": json.dumps(st.session_state.skeleton.get('EsqueletoMaestro', {})),
+# # #                     "CompendioMd": st.session_state.compendio_md,
+# # #                     "previous_context": "",
+# # #                     "capituloConstruir": chapter_id,
+# # #                     "mapeoContenido": json.dumps(mapeo_contenido)
+# # #                 }
+                
+# # #                 stream_container = st.empty()
+# # #                 result = process_wordware_api(APP_IDS["chapter_creator"], inputs, stream_container)
+                
+# # #                 status_placeholder.empty()
+                
+# # #                 if result:
+# # #                     generated_chapter = result.get('generatedChapter', {})
+# # #                     chapter_data = generated_chapter.get('chapterTitle', {})
+                    
+# # #                     if chapter_data:
+# # #                         st.session_state.generated_chapters[chapter_id] = chapter_data.copy()
+                        
+# # #                         if chapter_id not in st.session_state.chapters_completed:
+# # #                             st.session_state.chapters_completed.append(chapter_id)
+                        
+# # #                         st.success(f"✅ {chapter_id} generado exitosamente!")
+# # #                         st.balloons()
+# # #                         time.sleep(2)
+# # #                         st.rerun()
+# # #                     else:
+# # #                         st.error("❌ Respuesta malformada del API")
+# # #                 else:
+# # #                     st.error("❌ Fallo en la llamada al API")
+        
+# # #         # --- CHAPTER REVIEW ---
+# # #         if chapter_exists:
+# # #             chapter_data = st.session_state.generated_chapters[chapter_id]
+            
+# # #             with st.expander(f"📖 Ver Capítulo Generado", expanded=is_content_edit_mode):
+# # #                 col1, col2, col3 = st.columns([2, 1, 1])
+                
+# # #                 with col1:
+# # #                     st.metric("Word Count", chapter_data.get('conteo_palabras', 'N/A'))
+                
+# # #                 with col2:
+# # #                     edit_button_label = "💾 Guardar Cambios" if is_content_edit_mode else "✏️ Editar Contenido"
+# # #                     if st.button(edit_button_label, key=f"edit_content_btn_{chapter_id}"):
+# # #                         if is_content_edit_mode:
+# # #                             edited_content = st.session_state.get(f"edit_content_{chapter_id}", "")
+# # #                             st.session_state.generated_chapters[chapter_id]['contenido_capitulo'] = edited_content
+# # #                             word_count = len(edited_content.split())
+# # #                             st.session_state.generated_chapters[chapter_id]['conteo_palabras'] = word_count
+# # #                             st.session_state.edit_modes[chapter_id] = False
+# # #                             st.success("✅ Cambios guardados!")
+# # #                             st.rerun()
+# # #                         else:
+# # #                             st.session_state.edit_modes[chapter_id] = True
+# # #                             st.rerun()
+                
+# # #                 with col3:
+# # #                     if st.button("🔄 Regenerar", key=f"regen_{chapter_id}"):
+# # #                         st.session_state.editing_params_for = chapter_id
+# # #                         st.rerun()
+                
+# # #                 st.markdown("#### Referencias Usadas")
+# # #                 st.write(chapter_data.get('referencias_usadas', []))
+                
+# # #                 st.markdown("#### Contenido del Capítulo")
+# # #                 if is_content_edit_mode:
+# # #                     st.text_area("Editar contenido:", value=chapter_data.get('contenido_capitulo', ''), height=400, key=f"edit_content_{chapter_id}")
+# # #                 else:
+# # #                     st.markdown(chapter_data.get('contenido_capitulo', 'No content found.'))
+        
+# # #         st.divider()
+    
+# # #     if completed_chapters >= total_chapters:
+# # #         st.success("✅ Todos los capítulos generados. Procede a Stage 5.")
+
+## --- Stage 4: Chapter Creation (ENHANCED - Full Parameter Editing + Auto Arco Narrativo) ---
 def render_stage_4():
     st.header("Stage 4: Chapter Generation")
     st.markdown("Generate chapters in any order. Edit parameters before generation and regenerate any chapter as needed.")
@@ -2045,9 +2378,55 @@ def render_stage_4():
                     
                     st.divider()
                     
-                    # Narrative Arc (optional, can be hidden if too much)
-                    with st.expander("Arco Narrativo (Opcional)", expanded=False):
-                        edited_arco = st.text_area("Arco Narrativo", value=arco_narrativo, height=100, key=f"param_arco_{chapter_id}")
+                    # Arco Narrativo with Auto-Update Button
+                    st.markdown("**Arco Narrativo**")
+                    col_arco1, col_arco2 = st.columns([3, 1])
+                    with col_arco2:
+                        if st.button("🔄 Auto-actualizar", key=f"auto_arco_{chapter_id}", help="Regenera el arco narrativo basado en la estructura actual de capítulos y subtemas", use_container_width=True):
+                            with st.spinner("Generando nuevo arco narrativo..."):
+                                # Get current skeleton structure (with any edits made above)
+                                current_esqueleto = st.session_state.skeleton.get('EsqueletoMaestro', {}).get('esqueletoLogica', {})
+                                current_chapters = current_esqueleto.get('estructura_capitulos', [])
+                                current_subchapters = current_esqueleto.get('estructura_sub_capitulos', [])
+                                current_arco = current_esqueleto.get('arco_narrativo', '')
+                                
+                                inputs = {
+                                    "estructura_capitulos": current_chapters,
+                                    "estructura_sub_capitulos": current_subchapters,
+                                    "previous_arco": current_arco
+                                }
+                                
+                                result = process_wordware_api(APP_IDS["arcoNarrativo"], inputs)
+                                
+                                if result:
+                                    # Handle unstructured output like Stage 5
+                                    new_arco = ""
+                                    if isinstance(result, dict):
+                                        # Get the first string value from the dictionary
+                                        for key, value in result.items():
+                                            if isinstance(value, str):
+                                                new_arco = value
+                                                break
+                                        else:
+                                            # If no string values found, convert entire dict to string
+                                            new_arco = str(result)
+                                    else:
+                                        new_arco = result
+                                    
+                                    if new_arco:
+                                        # Update the skeleton
+                                        current_esqueleto['arco_narrativo'] = new_arco
+                                        st.success("✅ Arco narrativo actualizado!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ No se pudo generar el arco narrativo")
+                                else:
+                                    st.error("❌ Error en la llamada al API")
+                    
+                    with col_arco1:
+                        edited_arco = st.text_area("Descripción del arco narrativo", value=arco_narrativo, height=120, key=f"param_arco_{chapter_id}", label_visibility="collapsed")
+                    
+                    st.divider()
                     
                     col1, col2 = st.columns(2)
                     with col1:
@@ -2096,9 +2475,8 @@ def render_stage_4():
                             if 'referenciasMapeo' in dist_refs and chapter_index < len(dist_refs['referenciasMapeo']):
                                 dist_refs['referenciasMapeo'][chapter_index] = f"Capítulo {chapter_number}: {edited_referencias}"
                             
-                            # Update narrative arc if it was expanded/edited
-                            if f"param_arco_{chapter_id}" in st.session_state:
-                                esqueleto_logica['arco_narrativo'] = st.session_state[f"param_arco_{chapter_id}"]
+                            # Update narrative arc
+                            esqueleto_logica['arco_narrativo'] = edited_arco
                             
                             st.session_state.editing_params_for = None
                             
