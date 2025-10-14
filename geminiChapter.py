@@ -174,7 +174,7 @@ def process_wordware_api(app_id, inputs, stream_container=None):
     payload = {"inputs": inputs}
     
     try:
-        response = requests.post(url, json=payload, headers=headers, stream=True, timeout=300)
+        response = requests.post(url, json=payload, headers=headers, stream=True, timeout=1600) #increased timeout time because of 2.3 mapping.
         response.raise_for_status()
 
         final_output = None
