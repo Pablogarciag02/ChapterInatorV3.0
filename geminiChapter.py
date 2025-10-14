@@ -2444,6 +2444,8 @@ def render_stage_4():
                                     if new_arco:
                                         # Update the skeleton
                                         esqueleto_base['arco_narrativo'] = new_arco
+                                        #Also update the widget state so text area shows new value
+                                        st.session_state[f"param_arco_{chapter_id}"] = new_arco
                                         st.success("✅ Arco narrativo actualizado!")
                                         st.rerun()
                                     else:
