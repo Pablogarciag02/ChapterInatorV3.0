@@ -980,7 +980,7 @@ def render_stage_3():
                     "Reference Density", 
                     min_value=1, 
                     max_value=max(total_references, 1),
-                    value=min(25, total_references) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_references),
+                    # value=min(25, total_references) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_references),
                     key='reference_count',
                     help=f"Desired total number of references in the ebook. ({total_references} references available from compendio)"
                 )
@@ -1026,10 +1026,6 @@ def render_stage_3():
 
             # If user confirmed or first time generating
             if st.session_state.get('confirm_regen', True):
-                #Force re-run to commit form values if this is the first submission
-                if 'confirm_regen' not in st.session_state:
-                    st.session_state.confirm_regen = True
-                    st.rerun()
                 st.session_state.stage_3_status = 'in_progress'
                 
                 # Clear confirmation flag
