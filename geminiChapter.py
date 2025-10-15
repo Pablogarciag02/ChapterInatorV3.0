@@ -149,9 +149,22 @@ def upload_to_tmpfiles(file):
         st.toast(f"Error with tmpfiles.org: {e}", icon="🔥")
     return None
 
+def upload_to_fileio(file):
+    """Uploads a file to file.io."""
+    try:
+        file.seek(0)
+        files = {"file": (file.name, file, file.type)}
+        response = requests.post("https://file.io", files=files, timeout=60)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("link", "")
+    except Exception as e:
+        st.toast(f"Error with file.io: {e}", icon="🔥")
+    return None
+
 def upload_file_with_fallback(file):
     """Tries multiple upload services until one succeeds."""
-    services = [upload_to_0x0, upload_to_catbox, upload_to_tmpfiles]
+    services = [upload_to_0x0, upload_to_catbox, upload_to_tmpfiles, upload_to_fileio]
     for service in services:
         service_name = service.__name__.replace('upload_to_', '').replace('_', ' ').title()
         with st.spinner(f"Uploading via {service_name}..."):
@@ -161,6 +174,8 @@ def upload_file_with_fallback(file):
                 return url
     st.error("All file upload services failed. Please check your network or try again later.")
     return None
+
+
 
 # --- API CALLER & STREAMING ---
 
