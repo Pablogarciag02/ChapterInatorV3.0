@@ -300,7 +300,7 @@ def render_sidebar():
         
         # Stage 2
         st.button(
-            "Stage 2: Reference Mapping", 
+            "Stage 2:  Reference & Citation Mapping", 
             on_click=lambda: st.session_state.update(current_stage=2), 
             use_container_width=True, 
             disabled=st.session_state.stage_1_status != 'completed' or has_generated_chapters or is_generating, 
@@ -417,7 +417,7 @@ def render_stage_1():
 
 ## --- Stage 2: Reference Mapping ---
 def render_stage_2():
-    st.header("Stage 2: Reference Mapping")
+    st.header("Stage 2: Reference & Citation Mapping")
     st.markdown("This stage automatically extracts and maps all references, citations, and tables from the processed content. Click the button below to begin.")
 
     if st.button("Start Reference Mapping", disabled=(st.session_state.stage_1_status != 'completed')):
@@ -978,7 +978,7 @@ def render_stage_3():
             cols = st.columns(2)
             with cols[0]:
                 st.slider(
-                    "Reference Density", 
+                    "Citation Density", 
                     min_value=1, 
                     max_value=max(total_citations, 1),
                     key='reference_count',
