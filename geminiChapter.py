@@ -981,7 +981,6 @@ def render_stage_3():
                     "Reference Density", 
                     min_value=1, 
                     max_value=max(total_citations, 1),
-                    value=min(25, total_citations) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_citations),
                     key='reference_count',
                     help=f"Desired total number of references in the ebook. ({total_citations} citations available from compendio)"
                 )
