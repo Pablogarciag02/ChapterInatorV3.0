@@ -936,11 +936,12 @@ def render_stage_2():
 #                 confirm_cancel()
 
 ## --- Stage 3: Structure Creation (MODIFIED - Dynamic Reference Slider) ---
+## --- Stage 3: Structure Creation (MODIFIED - Dynamic Citation Count Slider) ---
 def render_stage_3():
     st.header("Stage 3: Ebook Structure Creation")
     st.markdown("Define the core parameters for your ebook. The AI will generate a detailed skeleton, including chapter structure, narrative arc, and reference distribution.")
 
-    # Extract total references from Stage 2 mapping for dynamic slider
+    # Extract total citations from Stage 2 mapping for dynamic slider
     try:
         mapeo_contenido = st.session_state.mapping_combined.get('Merger', {}).get('output', st.session_state.mapping_combined)
         
@@ -948,14 +949,12 @@ def render_stage_3():
         if isinstance(mapeo_contenido, str):
             mapeo_contenido = json.loads(mapeo_contenido)
         
-        # referencias = mapeo_contenido.get('referencias', {}).get('listadoReferencias', [])
-        #total_references = len(referencias) if referencias else 50  # Fallback to 50 if empty
         citas = mapeo_contenido.get('citas', {}).get('citas_en_texto', [])
-        total_citas = len(citas) if citas else 50  # Fallback to 50 if empty
+        total_citations = len(citas) if citas else 50  # Fallback to 50 if empty
     except Exception as e:
         # If anything fails, default to 50
-        total_references = 50
-        st.warning(f"Could not extract reference count, defaulting to max 50. Error: {e}")
+        total_citations = 50
+        st.warning(f"Could not extract citation count, defaulting to max 50. Error: {e}")
 
     # Check if we're in edit mode
     if 'edit_mode_stage_3' not in st.session_state:
@@ -979,12 +978,12 @@ def render_stage_3():
             cols = st.columns(2)
             with cols[0]:
                 st.slider(
-                    "Citation Density", 
-                    min_value=0, 
-                    max_value=max(total_references, 1),
-                    # value=min(25, total_references) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_references),
+                    "Reference Density", 
+                    min_value=1, 
+                    max_value=max(total_citations, 1),
+                    value=min(25, total_citations) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_citations),
                     key='reference_count',
-                    help=f"Desired total number of references in the ebook. ({total_references} references available from compendio)"
+                    help=f"Desired total number of references in the ebook. ({total_citations} citations available from compendio)"
                 )
             with cols[1]:
                 st.select_slider(
