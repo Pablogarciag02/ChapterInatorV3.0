@@ -948,8 +948,10 @@ def render_stage_3():
         if isinstance(mapeo_contenido, str):
             mapeo_contenido = json.loads(mapeo_contenido)
         
-        referencias = mapeo_contenido.get('referencias', {}).get('listadoReferencias', [])
-        total_references = len(referencias) if referencias else 50  # Fallback to 50 if empty
+        # referencias = mapeo_contenido.get('referencias', {}).get('listadoReferencias', [])
+        #total_references = len(referencias) if referencias else 50  # Fallback to 50 if empty
+        citas = mapeo_contenido.get('citas', {}).get('citas_en_texto', [])
+        total_citas = len(citas) if citas else 50  # Fallback to 50 if empty
     except Exception as e:
         # If anything fails, default to 50
         total_references = 50
@@ -977,8 +979,8 @@ def render_stage_3():
             cols = st.columns(2)
             with cols[0]:
                 st.slider(
-                    "Reference Density", 
-                    min_value=1, 
+                    "Citation Density", 
+                    min_value=0, 
                     max_value=max(total_references, 1),
                     # value=min(25, total_references) if 'reference_count' not in st.session_state else min(st.session_state.reference_count, total_references),
                     key='reference_count',
