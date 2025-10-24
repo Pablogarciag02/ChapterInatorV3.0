@@ -346,7 +346,83 @@ def render_sidebar():
         if st.button("🔄 Clear All Data & Restart", use_container_width=True, type="primary", disabled=is_generating):
             clear_all_session_data()
 
-## --- Stage 1: Content Processing (UTILIZES WORDWARE AS PARSER) ---
+# ## --- Stage 1: Content Processing (UTILIZES WORDWARE AS PARSER) ---
+# def render_stage_1():
+#     st.header("Stage 1: Content Processing")
+#     st.markdown("Upload your source PDF documents. The 'Compendio' is required, while the 'Project Brief' is optional but recommended for better context.")
+
+#     compendio_file = st.file_uploader("Upload Compendio PDF (Required)", type="pdf", key="compendio_uploader")
+#     project_brief_file = st.file_uploader("Upload Project Brief PDF (Optional)", type="pdf", key="project_brief_uploader")
+
+#     if st.button("Process Source Documents", disabled=(not compendio_file)):
+#         st.session_state.stage_1_status = 'in_progress'
+        
+#         compendio_url = upload_file_with_fallback(compendio_file)
+#         if not compendio_url:
+#             st.session_state.stage_1_status = 'error'
+#             st.error("Failed to upload the Compendio PDF. Cannot proceed.")
+#             return
+
+#         st.session_state.uploaded_files['compendio'] = {"url": compendio_url, "name": compendio_file.name}
+        
+#         brief_url = None
+#         if project_brief_file:
+#             brief_url = upload_file_with_fallback(project_brief_file)
+#             if brief_url:
+#                 st.session_state.uploaded_files['project_brief'] = {"url": brief_url, "name": project_brief_file.name}
+
+#         # Use ThreadPoolExecutor to run API calls in parallel
+#         with ThreadPoolExecutor(max_workers=3) as executor:
+#             st.info("Starting parallel processing of documents... This may take several minutes.")
+            
+#             # Prepare inputs
+#             compendio_input = {"type": "file", "file_type": "application/pdf", "file_url": compendio_url, "file_name": compendio_file.name}
+            
+#             # Submit jobs
+#             future1 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown"], {"CompendioPDF": compendio_input})
+#             future2 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown2"], {"CompendioPDF": compendio_input})
+#             future3 = None
+#             if brief_url:
+#                 brief_input = {"type": "file", "file_type": "application/pdf", "file_url": brief_url, "file_name": project_brief_file.name}
+#                 future3 = executor.submit(process_wordware_api, APP_IDS["project_brief_to_markdown"], {"ProjectBriefPDF": brief_input})
+#             with st.status("Processing Compendio (Part 1/2)..."):
+#                 result1 = future1.result()
+#                 st.session_state.stage_1_1_output = result1 if isinstance(result1, str) else list(result1.values())[0]
+#             with st.status("Processing Compendio (Part 2/2)..."):
+#                 result2 = future2.result()
+#                 st.session_state.stage_1_2_output = result2 if isinstance(result2, str) else list(result2.values())[0]
+
+#         if st.session_state.stage_1_1_output and st.session_state.stage_1_2_output:
+#             st.session_state.compendio_md = st.session_state.stage_1_1_output + "\n\n" + st.session_state.stage_1_2_output
+#             st.session_state.stage_1_status = 'completed'
+#             st.success("Stage 1 Completed! All documents processed successfully.")
+#         else:
+#             st.session_state.stage_1_status = 'error'
+#             st.error("An error occurred during document processing. Check the logs above.")
+            
+#         st.rerun()
+
+#     if st.session_state.stage_1_status == 'completed':
+#         st.success("✅ Stage 1 is complete. You can now proceed to Stage 2.")
+#         with st.expander("View Processed Compendio Markdown"):
+#             st.markdown(st.session_state.compendio_md)
+#             st.download_button(
+#                 label="Download Compendio.md",
+#                 data=st.session_state.compendio_md.encode('utf-8'),
+#                 file_name="compendio.md",
+#                 mime="text/markdown"
+#             )
+#         if st.session_state.project_brief_md:
+#             with st.expander("View Processed Project Brief Markdown"):
+#                 st.markdown(st.session_state.project_brief_md)
+#                 st.download_button(
+#                     label="Download Project_Brief.md",
+#                     data=st.session_state.project_brief_md.encode('utf-8'),
+#                     file_name="project_brief.md",
+#                     mime="text/markdown"
+#                 )
+
+## --- Stage 1: Content Processing with LlamaParse ---
 def render_stage_1():
     st.header("Stage 1: Content Processing")
     st.markdown("Upload your source PDF documents. The 'Compendio' is required, while the 'Project Brief' is optional but recommended for better context.")
@@ -357,193 +433,117 @@ def render_stage_1():
     if st.button("Process Source Documents", disabled=(not compendio_file)):
         st.session_state.stage_1_status = 'in_progress'
         
-        compendio_url = upload_file_with_fallback(compendio_file)
-        if not compendio_url:
+        # Import LlamaParse here to avoid issues if not used
+        try:
+            from llama_parse import LlamaParse
+            import nest_asyncio
+            nest_asyncio.apply()
+        except ImportError:
+            st.error("LlamaParse not installed. Please run: pip install llama-parse nest-asyncio")
             st.session_state.stage_1_status = 'error'
-            st.error("Failed to upload the Compendio PDF. Cannot proceed.")
             return
-
-        st.session_state.uploaded_files['compendio'] = {"url": compendio_url, "name": compendio_file.name}
         
-        brief_url = None
+        # Process Compendio
+        with st.spinner(f"Processing {compendio_file.name} with LlamaParse..."):
+            try:
+                # Initialize parser with Agentic-equivalent settings
+                parser = LlamaParse(
+                    api_key=st.secrets["LLAMAPARSE_API_KEY"],
+                    result_type="markdown",
+                    parsing_instruction="Extract all text content including ALL tables. Preserve complete table structure with proper markdown formatting. Include all citations, references, and footnotes.",
+                    verbose=True,
+                    invalidate_cache=True
+                )
+                
+                # Save file temporarily
+                import tempfile
+                import os
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                    tmp_file.write(compendio_file.getvalue())
+                    tmp_file_path = tmp_file.name
+                
+                # Parse the file
+                documents = parser.load_data(tmp_file_path)
+                
+                # Clean up temp file
+                os.unlink(tmp_file_path)
+                
+                # Combine all pages into single markdown
+                compendio_md = "\n\n".join([doc.text for doc in documents])
+                
+                if not compendio_md:
+                    raise ValueError("No content extracted from Compendio")
+                    
+                st.session_state.compendio_md = compendio_md
+                st.success(f"✅ Compendio processed: {len(compendio_md)} characters extracted")
+                
+            except Exception as e:
+                st.session_state.stage_1_status = 'error'
+                st.error(f"Failed to process Compendio: {str(e)}")
+                return
+        
+        # Process Project Brief if provided
+        st.session_state.project_brief_md = ""
         if project_brief_file:
-            brief_url = upload_file_with_fallback(project_brief_file)
-            if brief_url:
-                st.session_state.uploaded_files['project_brief'] = {"url": brief_url, "name": project_brief_file.name}
-
-        # Use ThreadPoolExecutor to run API calls in parallel
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            st.info("Starting parallel processing of documents... This may take several minutes.")
-            
-            # Prepare inputs
-            compendio_input = {"type": "file", "file_type": "application/pdf", "file_url": compendio_url, "file_name": compendio_file.name}
-            
-            # Submit jobs
-            future1 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown"], {"CompendioPDF": compendio_input})
-            future2 = executor.submit(process_wordware_api, APP_IDS["compendio_to_markdown2"], {"CompendioPDF": compendio_input})
-            future3 = None
-            if brief_url:
-                brief_input = {"type": "file", "file_type": "application/pdf", "file_url": brief_url, "file_name": project_brief_file.name}
-                future3 = executor.submit(process_wordware_api, APP_IDS["project_brief_to_markdown"], {"ProjectBriefPDF": brief_input})
-            with st.status("Processing Compendio (Part 1/2)..."):
-                result1 = future1.result()
-                st.session_state.stage_1_1_output = result1 if isinstance(result1, str) else list(result1.values())[0]
-            with st.status("Processing Compendio (Part 2/2)..."):
-                result2 = future2.result()
-                st.session_state.stage_1_2_output = result2 if isinstance(result2, str) else list(result2.values())[0]
-
-        if st.session_state.stage_1_1_output and st.session_state.stage_1_2_output:
-            st.session_state.compendio_md = st.session_state.stage_1_1_output + "\n\n" + st.session_state.stage_1_2_output
-            st.session_state.stage_1_status = 'completed'
-            st.success("Stage 1 Completed! All documents processed successfully.")
-        else:
-            st.session_state.stage_1_status = 'error'
-            st.error("An error occurred during document processing. Check the logs above.")
-            
+            with st.spinner(f"Processing {project_brief_file.name} with LlamaParse..."):
+                try:
+                    # Use same parser settings
+                    parser_brief = LlamaParse(
+                        api_key=st.secrets["LLAMAPARSE_API_KEY"],
+                        result_type="markdown",
+                        parsing_instruction="Extract all text content including tables and references.",
+                        verbose=True,
+                        invalidate_cache=True
+                    )
+                    
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                        tmp_file.write(project_brief_file.getvalue())
+                        tmp_file_path = tmp_file.name
+                    
+                    documents_brief = parser_brief.load_data(tmp_file_path)
+                    os.unlink(tmp_file_path)
+                    
+                    brief_md = "\n\n".join([doc.text for doc in documents_brief])
+                    
+                    if brief_md:
+                        st.session_state.project_brief_md = brief_md
+                        st.success(f"✅ Project Brief processed: {len(brief_md)} characters extracted")
+                    else:
+                        st.warning("Project Brief processed but no content extracted, continuing without it.")
+                        
+                except Exception as e:
+                    st.warning(f"Could not process Project Brief: {str(e)}. Continuing with Compendio only.")
+        
+        # Mark stage as complete
+        st.session_state.stage_1_status = 'completed'
+        st.success("Stage 1 Completed! Documents processed successfully.")
         st.rerun()
 
+    # Display results if stage is completed
     if st.session_state.stage_1_status == 'completed':
         st.success("✅ Stage 1 is complete. You can now proceed to Stage 2.")
+        
+        # Show Compendio content
         with st.expander("View Processed Compendio Markdown"):
-            st.markdown(st.session_state.compendio_md)
+            st.markdown(st.session_state.compendio_md[:2000] + "..." if len(st.session_state.compendio_md) > 2000 else st.session_state.compendio_md)
             st.download_button(
                 label="Download Compendio.md",
                 data=st.session_state.compendio_md.encode('utf-8'),
                 file_name="compendio.md",
                 mime="text/markdown"
             )
+        
+        # Show Project Brief content if exists
         if st.session_state.project_brief_md:
             with st.expander("View Processed Project Brief Markdown"):
-                st.markdown(st.session_state.project_brief_md)
+                st.markdown(st.session_state.project_brief_md[:2000] + "..." if len(st.session_state.project_brief_md) > 2000 else st.session_state.project_brief_md)
                 st.download_button(
                     label="Download Project_Brief.md",
                     data=st.session_state.project_brief_md.encode('utf-8'),
                     file_name="project_brief.md",
                     mime="text/markdown"
                 )
-
-# # # ## --- Stage 1: Content Processing with LlamaParse ---
-# # # def render_stage_1():
-# # #     st.header("Stage 1: Content Processing")
-# # #     st.markdown("Upload your source PDF documents. The 'Compendio' is required, while the 'Project Brief' is optional but recommended for better context.")
-
-# # #     compendio_file = st.file_uploader("Upload Compendio PDF (Required)", type="pdf", key="compendio_uploader")
-# # #     project_brief_file = st.file_uploader("Upload Project Brief PDF (Optional)", type="pdf", key="project_brief_uploader")
-
-# # #     if st.button("Process Source Documents", disabled=(not compendio_file)):
-# # #         st.session_state.stage_1_status = 'in_progress'
-        
-# # #         # Import LlamaParse here to avoid issues if not used
-# # #         try:
-# # #             from llama_parse import LlamaParse
-# # #             import nest_asyncio
-# # #             nest_asyncio.apply()
-# # #         except ImportError:
-# # #             st.error("LlamaParse not installed. Please run: pip install llama-parse nest-asyncio")
-# # #             st.session_state.stage_1_status = 'error'
-# # #             return
-        
-# # #         # Process Compendio
-# # #         with st.spinner(f"Processing {compendio_file.name} with LlamaParse..."):
-# # #             try:
-# # #                 # Initialize parser with Agentic-equivalent settings
-# # #                 parser = LlamaParse(
-# # #                     api_key=st.secrets["LLAMAPARSE_API_KEY"],
-# # #                     result_type="markdown",
-# # #                     parsing_instruction="Extract all text content including ALL tables. Preserve complete table structure with proper markdown formatting. Include all citations, references, and footnotes.",
-# # #                     verbose=True,
-# # #                     invalidate_cache=True
-# # #                 )
-                
-# # #                 # Save file temporarily
-# # #                 import tempfile
-# # #                 import os
-                
-# # #                 with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-# # #                     tmp_file.write(compendio_file.getvalue())
-# # #                     tmp_file_path = tmp_file.name
-                
-# # #                 # Parse the file
-# # #                 documents = parser.load_data(tmp_file_path)
-                
-# # #                 # Clean up temp file
-# # #                 os.unlink(tmp_file_path)
-                
-# # #                 # Combine all pages into single markdown
-# # #                 compendio_md = "\n\n".join([doc.text for doc in documents])
-                
-# # #                 if not compendio_md:
-# # #                     raise ValueError("No content extracted from Compendio")
-                    
-# # #                 st.session_state.compendio_md = compendio_md
-# # #                 st.success(f"✅ Compendio processed: {len(compendio_md)} characters extracted")
-                
-# # #             except Exception as e:
-# # #                 st.session_state.stage_1_status = 'error'
-# # #                 st.error(f"Failed to process Compendio: {str(e)}")
-# # #                 return
-        
-# # #         # Process Project Brief if provided
-# # #         st.session_state.project_brief_md = ""
-# # #         if project_brief_file:
-# # #             with st.spinner(f"Processing {project_brief_file.name} with LlamaParse..."):
-# # #                 try:
-# # #                     # Use same parser settings
-# # #                     parser_brief = LlamaParse(
-# # #                         api_key=st.secrets["LLAMAPARSE_API_KEY"],
-# # #                         result_type="markdown",
-# # #                         parsing_instruction="Extract all text content including tables and references.",
-# # #                         verbose=True,
-# # #                         invalidate_cache=True
-# # #                     )
-                    
-# # #                     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-# # #                         tmp_file.write(project_brief_file.getvalue())
-# # #                         tmp_file_path = tmp_file.name
-                    
-# # #                     documents_brief = parser_brief.load_data(tmp_file_path)
-# # #                     os.unlink(tmp_file_path)
-                    
-# # #                     brief_md = "\n\n".join([doc.text for doc in documents_brief])
-                    
-# # #                     if brief_md:
-# # #                         st.session_state.project_brief_md = brief_md
-# # #                         st.success(f"✅ Project Brief processed: {len(brief_md)} characters extracted")
-# # #                     else:
-# # #                         st.warning("Project Brief processed but no content extracted, continuing without it.")
-                        
-# # #                 except Exception as e:
-# # #                     st.warning(f"Could not process Project Brief: {str(e)}. Continuing with Compendio only.")
-        
-# # #         # Mark stage as complete
-# # #         st.session_state.stage_1_status = 'completed'
-# # #         st.success("Stage 1 Completed! Documents processed successfully.")
-# # #         st.rerun()
-
-# # #     # Display results if stage is completed
-# # #     if st.session_state.stage_1_status == 'completed':
-# # #         st.success("✅ Stage 1 is complete. You can now proceed to Stage 2.")
-        
-# # #         # Show Compendio content
-# # #         with st.expander("View Processed Compendio Markdown"):
-# # #             st.markdown(st.session_state.compendio_md[:2000] + "..." if len(st.session_state.compendio_md) > 2000 else st.session_state.compendio_md)
-# # #             st.download_button(
-# # #                 label="Download Compendio.md",
-# # #                 data=st.session_state.compendio_md.encode('utf-8'),
-# # #                 file_name="compendio.md",
-# # #                 mime="text/markdown"
-# # #             )
-        
-# # #         # Show Project Brief content if exists
-# # #         if st.session_state.project_brief_md:
-# # #             with st.expander("View Processed Project Brief Markdown"):
-# # #                 st.markdown(st.session_state.project_brief_md[:2000] + "..." if len(st.session_state.project_brief_md) > 2000 else st.session_state.project_brief_md)
-# # #                 st.download_button(
-# # #                     label="Download Project_Brief.md",
-# # #                     data=st.session_state.project_brief_md.encode('utf-8'),
-# # #                     file_name="project_brief.md",
-# # #                     mime="text/markdown"
-# # #                 )
 
 ## --- Stage 2: Reference Mapping ---
 def render_stage_2():
